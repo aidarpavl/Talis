@@ -32,6 +32,9 @@
             font-size: 1.8rem;
             margin-bottom: 8px;
         }
+        .header p {
+            opacity: 0.9;
+        }
         .survey-body {
             padding: 24px 28px;
             max-height: 80vh;
@@ -51,6 +54,10 @@
             padding: 18px 22px;
             margin-bottom: 20px;
             border: 1px solid #e2edf7;
+            transition: 0.15s;
+        }
+        .question-card:hover {
+            border-color: #b8d0e0;
         }
         .question-text {
             font-weight: 700;
@@ -77,11 +84,17 @@
             border-radius: 40px;
             border: 1px solid #cbdde9;
             cursor: pointer;
+            transition: 0.15s;
+        }
+        .radio-opt:hover, .checkbox-opt:hover {
+            background: #e8f0fe;
+            border-color: #1e466e;
         }
         input[type="radio"], input[type="checkbox"] {
             accent-color: #2c6e5c;
             width: 18px;
             height: 18px;
+            flex-shrink: 0;
         }
         input[type="number"], input[type="text"], select, textarea {
             width: 100%;
@@ -90,16 +103,15 @@
             border-radius: 30px;
             border: 1px solid #cbdde9;
             margin-top: 6px;
+            background: white;
+            font-size: 0.95rem;
+        }
+        input[type="number"] {
+            max-width: 180px;
         }
         textarea {
             max-width: 100%;
             resize: vertical;
-        }
-        .error-msg {
-            color: #d9534f;
-            font-size: 0.7rem;
-            margin-top: 8px;
-            display: none;
         }
         .button-group {
             display: flex;
@@ -118,22 +130,23 @@
             font-size: 0.95rem;
             cursor: pointer;
             transition: 0.2s;
+            border: none;
         }
         button:hover {
-            background: #0f3452;
             transform: scale(0.97);
+            opacity: 0.9;
         }
         .btn-swot {
             background: #2c6e5c;
         }
-        .btn-swot:hover {
-            background: #1e5546;
-        }
         .btn-upload {
             background: #6c4e2e;
         }
-        .btn-upload:hover {
-            background: #4f3a22;
+        .btn-google {
+            background: #0f9d58;
+        }
+        .btn-google:hover {
+            background: #0b7a45;
         }
         .file-area {
             background: #f4f7fc;
@@ -147,8 +160,24 @@
             text-align: center;
             font-weight: 500;
             margin: 15px 0;
-            padding: 10px;
+            padding: 12px 20px;
             border-radius: 50px;
+            display: none;
+        }
+        .status-msg.show {
+            display: block;
+        }
+        .status-msg.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-msg.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status-msg.info {
+            background: #d1ecf1;
+            color: #0c5460;
         }
         .footer {
             background: #eaf0f6;
@@ -159,282 +188,386 @@
         }
         hr {
             margin: 25px 0;
+            border: none;
+            border-top: 2px solid #e2edf7;
         }
         .swot-result {
             background: #f0f4f9;
             border-radius: 24px;
             padding: 16px;
             margin-top: 16px;
+            display: none;
+        }
+        .swot-result.show {
+            display: block;
         }
         .swot-item {
             margin: 10px 0;
-            padding: 8px;
+            padding: 12px 16px;
             border-radius: 12px;
+            font-size: 0.95rem;
         }
-        .swot-s { background: #d4edda; border-left: 4px solid #28a745; }
-        .swot-w { background: #f8d7da; border-left: 4px solid #dc3545; }
-        .swot-o { background: #d1ecf1; border-left: 4px solid #17a2b8; }
-        .swot-t { background: #fff3cd; border-left: 4px solid #ffc107; }
+        .swot-s { background: #d4edda; border-left: 6px solid #28a745; }
+        .swot-w { background: #f8d7da; border-left: 6px solid #dc3545; }
+        .swot-o { background: #d1ecf1; border-left: 6px solid #17a2b8; }
+        .swot-t { background: #fff3cd; border-left: 6px solid #ffc107; }
+        .inline-flex {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            margin-top: 8px;
+        }
         @media (max-width: 700px) {
             .survey-body { padding: 16px; }
             .question-card { padding: 12px; }
+            input[type="number"] { max-width: 100%; }
         }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
-        <h1>📋 Talis мұғалім сауалнамасы (толық 43 сұрақ)</h1>
-        <p>Нәтижелерді Excel-ге сақтау | Дайын Excel файлдан SWOT талдау | SWOT нәтижесін Excel-ге жүктеу</p>
+        <h1>📋 Talis мұғалім сауалнамасы (43 сұрақ)</h1>
+        <p>Нәтижелерді Excel-ге сақтау | Excel файлдан SWOT талдау | Google Sheets-ке сақтау</p>
     </div>
     <div class="survey-body">
+
         <!-- САУАЛНАМА ФОРМАСЫ -->
         <form id="talisForm">
+
             <!-- 1 -->
             <div class="question-card">
                 <div class="question-text">1. Жынысыңыз қандай? <span class="required-star">*</span></div>
-                <div class="options-grid"><label class="radio-opt"><input type="radio" name="q1" value="Әйел"> Әйел</label><label class="radio-opt"><input type="radio" name="q1" value="Ер"> Ер</label></div>
+                <div class="options-grid">
+                    <label class="radio-opt"><input type="radio" name="q1" value="Әйел"> Әйел</label>
+                    <label class="radio-opt"><input type="radio" name="q1" value="Ер"> Ер</label>
+                </div>
             </div>
+
             <!-- 2 -->
             <div class="question-card">
                 <div class="question-text">2. Жасыңыз нешеде? <span class="required-star">*</span></div>
-                <div class="options-grid"><label class="radio-opt"><input type="radio" name="q2" value="25 ке дейін"> 25 ке дейін</label><label class="radio-opt"><input type="radio" name="q2" value="25-29"> 25-29</label><label class="radio-opt"><input type="radio" name="q2" value="30-39"> 30-39</label><label class="radio-opt"><input type="radio" name="q2" value="40-49"> 40-49</label><label class="radio-opt"><input type="radio" name="q2" value="50-59"> 50-59</label><label class="radio-opt"><input type="radio" name="q2" value="60+"> 60+</label></div>
+                <div class="options-grid">
+                    <label class="radio-opt"><input type="radio" name="q2" value="25 ке дейін"> 25 ке дейін</label>
+                    <label class="radio-opt"><input type="radio" name="q2" value="25-29"> 25-29</label>
+                    <label class="radio-opt"><input type="radio" name="q2" value="30-39"> 30-39</label>
+                    <label class="radio-opt"><input type="radio" name="q2" value="40-49"> 40-49</label>
+                    <label class="radio-opt"><input type="radio" name="q2" value="50-59"> 50-59</label>
+                    <label class="radio-opt"><input type="radio" name="q2" value="60+"> 60+</label>
+                </div>
             </div>
+
             <!-- 3 -->
             <div class="question-card">
                 <div class="question-text">3. Мұғалім ретінде жұмыспен қаншалықты қамтылғансыз? <span class="required-star">*</span></div>
-                <div class="options-grid"><label class="radio-opt"><input type="radio" name="q3" value="Толық уақыт"> Толық уақыт</label><label class="radio-opt"><input type="radio" name="q3" value="Жартылай (50-90%)"> Жартылай (50-90%)</label><label class="radio-opt"><input type="radio" name="q3" value="Жартылай (50% төмен)"> Жартылай (50% төмен)</label></div>
+                <div class="options-grid">
+                    <label class="radio-opt"><input type="radio" name="q3" value="Толық уақыт"> Толық уақыт</label>
+                    <label class="radio-opt"><input type="radio" name="q3" value="Жартылай (50-90%)"> Жартылай (50-90%)</label>
+                    <label class="radio-opt"><input type="radio" name="q3" value="Жартылай (50% төмен)"> Жартылай (50% төмен)</label>
+                </div>
             </div>
+
             <!-- 4 -->
             <div class="question-card">
-                <div class="question-text">4. Осы мектепте, сондай-ақ басқа мектепте мұғалім болып істейсіз бе? <span class="required-star">*</span></div>
-                <div class="options-grid"><label class="radio-opt"><input type="radio" name="q4" value="Иә"> Иә</label><label class="radio-opt"><input type="radio" name="q4" value="Жоқ"> Жоқ</label></div>
+                <div class="question-text">4. Осы мектептен басқа мектепте мұғалім болып істейсіз бе? <span class="required-star">*</span></div>
+                <div class="options-grid">
+                    <label class="radio-opt"><input type="radio" name="q4" value="Иә"> Иә</label>
+                    <label class="radio-opt"><input type="radio" name="q4" value="Жоқ"> Жоқ</label>
+                </div>
             </div>
+
             <!-- 5 -->
-            <div class="question-card"><div class="question-text">5. Басқа неше мектепте істейсіз?</div><input type="number" name="q5" value="0"></div>
+            <div class="question-card">
+                <div class="question-text">5. Басқа неше мектепте істейсіз?</div>
+                <input type="number" name="q5" value="0" min="0">
+            </div>
+
             <!-- 6 -->
             <div class="question-card">
                 <div class="question-text">6. Осы мектепте қандай дәрежеде еңбек етудесіз? <span class="required-star">*</span></div>
-                <div class="options-grid"><label class="radio-opt"><input type="radio" name="q6" value="Тұрақты (мерзімсіз)"> Тұрақты (мерзімсіз)</label><label class="radio-opt"><input type="radio" name="q6" value="Шарт >1 жыл"> Шарт >1 жыл</label><label class="radio-opt"><input type="radio" name="q6" value="Шарт ≤1 жыл"> Шарт ≤1 жыл</label></div>
+                <div class="options-grid">
+                    <label class="radio-opt"><input type="radio" name="q6" value="Тұрақты (мерзімсіз)"> Тұрақты (мерзімсіз)</label>
+                    <label class="radio-opt"><input type="radio" name="q6" value="Шарт >1 жыл"> Шарт &gt;1 жыл</label>
+                    <label class="radio-opt"><input type="radio" name="q6" value="Шарт ≤1 жыл"> Шарт ≤1 жыл</label>
+                </div>
             </div>
+
             <!-- 7 -->
             <div class="question-card">
                 <div class="question-text">7. Ең жоғары біліміңіз? <span class="required-star">*</span></div>
-                <div class="options-grid"><label class="radio-opt"><input type="radio" name="q7" value="Колледж"> Колледж</label><label class="radio-opt"><input type="radio" name="q7" value="ЖОО"> ЖОО</label><label class="radio-opt"><input type="radio" name="q7" value="Бакалавр"> Бакалавр</label><label class="radio-opt"><input type="radio" name="q7" value="Магистр"> Магистр</label><label class="radio-opt"><input type="radio" name="q7" value="PhD"> PhD</label></div>
+                <div class="options-grid">
+                    <label class="radio-opt"><input type="radio" name="q7" value="Колледж"> Колледж</label>
+                    <label class="radio-opt"><input type="radio" name="q7" value="ЖОО"> ЖОО</label>
+                    <label class="radio-opt"><input type="radio" name="q7" value="Бакалавр"> Бакалавр</label>
+                    <label class="radio-opt"><input type="radio" name="q7" value="Магистр"> Магистр</label>
+                    <label class="radio-opt"><input type="radio" name="q7" value="PhD"> PhD</label>
+                </div>
             </div>
-            <!-- 8 сағаттар -->
-            <div class="question-card"><div class="question-text">8а. Сабақ беру сағат/апта</div><input type="number" name="q8a" value="0"><div class="question-text">8б. Жоспарлау сағат</div><input type="number" name="q8b" value="0"><div class="question-text">8в. Әкімшілік сағат</div><input type="number" name="q8c" value="0"><div class="question-text">8г. Басқа (сипаттама)</div><input type="text" name="q8d_text" placeholder="сипаттама"><input type="number" name="q8d_hours" placeholder="сағат" value="0"></div>
+
+            <!-- 8 -->
+            <div class="question-card">
+                <div class="question-text">8а. Сабақ беру сағат/апта</div>
+                <input type="number" name="q8a" value="0" min="0">
+                <div class="question-text" style="margin-top:10px;">8б. Жоспарлау сағат</div>
+                <input type="number" name="q8b" value="0" min="0">
+                <div class="question-text" style="margin-top:10px;">8в. Әкімшілік сағат</div>
+                <input type="number" name="q8c" value="0" min="0">
+                <div class="question-text" style="margin-top:10px;">8г. Басқа (сипаттама + сағат)</div>
+                <div class="inline-flex">
+                    <input type="text" name="q8d_text" placeholder="сипаттама" style="max-width:250px;">
+                    <input type="number" name="q8d_hours" placeholder="сағат" value="0" min="0" style="max-width:120px;">
+                </div>
+            </div>
+
             <!-- 9 -->
             <div class="question-card">
                 <div class="question-text">9. Жалпы педагогикалық өтіліңіз? <span class="required-star">*</span></div>
-                <div class="options-grid"><label class="radio-opt"><input type="radio" name="q9" value="Бірінші жылым"> Бірінші жылым</label><label class="radio-opt"><input type="radio" name="q9" value="1-2 жыл"> 1-2 жыл</label><label class="radio-opt"><input type="radio" name="q9" value="3-5 жыл"> 3-5 жыл</label><label class="radio-opt"><input type="radio" name="q9" value="6-10 жыл"> 6-10 жыл</label><label class="radio-opt"><input type="radio" name="q9" value="16-20 жыл"> 16-20 жыл</label><label class="radio-opt"><input type="radio" name="q9" value="20+ жыл"> 20+ жыл</label></div>
+                <div class="options-grid">
+                    <label class="radio-opt"><input type="radio" name="q9" value="Бірінші жылым"> Бірінші жылым</label>
+                    <label class="radio-opt"><input type="radio" name="q9" value="1-2 жыл"> 1-2 жыл</label>
+                    <label class="radio-opt"><input type="radio" name="q9" value="3-5 жыл"> 3-5 жыл</label>
+                    <label class="radio-opt"><input type="radio" name="q9" value="6-10 жыл"> 6-10 жыл</label>
+                    <label class="radio-opt"><input type="radio" name="q9" value="11-15 жыл"> 11-15 жыл</label>
+                    <label class="radio-opt"><input type="radio" name="q9" value="16-20 жыл"> 16-20 жыл</label>
+                    <label class="radio-opt"><input type="radio" name="q9" value="20+ жыл"> 20+ жыл</label>
+                </div>
             </div>
+
             <!-- 10 -->
             <div class="question-card">
                 <div class="question-text">10. Осы мектептегі өтіліңіз? <span class="required-star">*</span></div>
-                <div class="options-grid"><label class="radio-opt"><input type="radio" name="q10" value="Бірінші жылым"> Бірінші жылым</label><label class="radio-opt"><input type="radio" name="q10" value="1-2 жыл"> 1-2 жыл</label><label class="radio-opt"><input type="radio" name="q10" value="3-5 жыл"> 3-5 жыл</label><label class="radio-opt"><input type="radio" name="q10" value="6-10 жыл"> 6-10 жыл</label><label class="radio-opt"><input type="radio" name="q10" value="6-20 жыл"> 6-20 жыл</label><label class="radio-opt"><input type="radio" name="q10" value="20+ жыл"> 20+ жыл</label></div>
+                <div class="options-grid">
+                    <label class="radio-opt"><input type="radio" name="q10" value="Бірінші жылым"> Бірінші жылым</label>
+                    <label class="radio-opt"><input type="radio" name="q10" value="1-2 жыл"> 1-2 жыл</label>
+                    <label class="radio-opt"><input type="radio" name="q10" value="3-5 жыл"> 3-5 жыл</label>
+                    <label class="radio-opt"><input type="radio" name="q10" value="6-10 жыл"> 6-10 жыл</label>
+                    <label class="radio-opt"><input type="radio" name="q10" value="11-15 жыл"> 11-15 жыл</label>
+                    <label class="radio-opt"><input type="radio" name="q10" value="16-20 жыл"> 16-20 жыл</label>
+                    <label class="radio-opt"><input type="radio" name="q10" value="20+ жыл"> 20+ жыл</label>
+                </div>
             </div>
+
             <!-- 11-16 -->
-            <div class="question-card"><div class="question-text">11. Кәсіби даму түрлері</div><div class="options-grid"><label class="checkbox-opt"><input type="checkbox" name="q11" value="Курстар"> Курстар</label><label class="checkbox-opt"><input type="checkbox" name="q11" value="Конференциялар"> Конференциялар</label><label class="checkbox-opt"><input type="checkbox" name="q11" value="Біліктілік бағдарламасы"> Біліктілік бағдарламасы</label></div>
-            <div class="question-text">12. Соңғы 18 айда курсқа барған күн саны</div><input type="number" name="q12" value="0">
-            <div class="question-text">13. Міндетті күндер саны</div><input type="number" name="q13" value="0">
-            <div class="question-text">14. Ақы төлегеніңіз?</div><div class="options-grid"><label class="radio-opt"><input type="radio" name="q14" value="Төлеген жоқ"> Төлеген жоқ</label><label class="radio-opt"><input type="radio" name="q14" value="Бірнешеуіне"> Бірнешеуіне</label><label class="radio-opt"><input type="radio" name="q14" value="Барлығына"> Барлығына</label></div>
-            <div class="question-text">15. Жұмыстан босатылдыңыз ба?</div><div class="options-grid"><label class="radio-opt"><input type="radio" name="q15" value="Иә"> Иә</label><label class="radio-opt"><input type="radio" name="q15" value="Жоқ"> Жоқ</label></div>
-            <div class="question-text">16. Қосымша ақы алдыңыз ба?</div><div class="options-grid"><label class="radio-opt"><input type="radio" name="q16" value="Иә"> Иә</label><label class="radio-opt"><input type="radio" name="q16" value="Жоқ"> Жоқ</label></div></div>
+            <div class="question-card">
+                <div class="question-text">11. Кәсіби даму түрлері</div>
+                <div class="options-grid">
+                    <label class="checkbox-opt"><input type="checkbox" name="q11" value="Курстар"> Курстар</label>
+                    <label class="checkbox-opt"><input type="checkbox" name="q11" value="Конференциялар"> Конференциялар</label>
+                    <label class="checkbox-opt"><input type="checkbox" name="q11" value="Біліктілік бағдарламасы"> Біліктілік бағдарламасы</label>
+                </div>
+                <div class="question-text" style="margin-top:10px;">12. Соңғы 18 айда курсқа барған күн саны</div>
+                <input type="number" name="q12" value="0" min="0">
+                <div class="question-text" style="margin-top:10px;">13. Міндетті күндер саны</div>
+                <input type="number" name="q13" value="0" min="0">
+                <div class="question-text" style="margin-top:10px;">14. Ақы төлегеніңіз?</div>
+                <div class="options-grid">
+                    <label class="radio-opt"><input type="radio" name="q14" value="Төлеген жоқ"> Төлеген жоқ</label>
+                    <label class="radio-opt"><input type="radio" name="q14" value="Бірнешеуіне"> Бірнешеуіне</label>
+                    <label class="radio-opt"><input type="radio" name="q14" value="Барлығына"> Барлығына</label>
+                </div>
+                <div class="question-text" style="margin-top:10px;">15. Жұмыстан босатылдыңыз ба?</div>
+                <div class="options-grid">
+                    <label class="radio-opt"><input type="radio" name="q15" value="Иә"> Иә</label>
+                    <label class="radio-opt"><input type="radio" name="q15" value="Жоқ"> Жоқ</label>
+                </div>
+                <div class="question-text" style="margin-top:10px;">16. Қосымша ақы алдыңыз ба?</div>
+                <div class="options-grid">
+                    <label class="radio-opt"><input type="radio" name="q16" value="Иә"> Иә</label>
+                    <label class="radio-opt"><input type="radio" name="q16" value="Жоқ"> Жоқ</label>
+                </div>
+            </div>
+
             <!-- 17 -->
-            <div class="question-card"><div class="question-text">17. Қосымша шаралар</div><div class="options-grid"><label class="checkbox-opt"><input type="checkbox" name="q17" value="Әдебиет оқу"> Әдебиет оқу</label><label class="checkbox-opt"><input type="checkbox" name="q17" value="Әріптестермен әңгімелесу"> Әріптестермен әңгімелесу</label></div></div>
+            <div class="question-card">
+                <div class="question-text">17. Қосымша шаралар</div>
+                <div class="options-grid">
+                    <label class="checkbox-opt"><input type="checkbox" name="q17" value="Әдебиет оқу"> Әдебиет оқу</label>
+                    <label class="checkbox-opt"><input type="checkbox" name="q17" value="Әріптестермен әңгімелесу"> Әріптестермен әңгімелесу</label>
+                </div>
+            </div>
+
             <!-- 18 -->
-            <div class="question-card"><div class="question-text">18. Даму қажеттіліктері</div><div class="options-grid"><label class="checkbox-opt"><input type="checkbox" name="q18" value="АКТ дағдылары"> АКТ дағдылары</label><label class="checkbox-opt"><input type="checkbox" name="q18" value="Сыныпты басқару"> Сыныпты басқару</label><label class="checkbox-opt"><input type="checkbox" name="q18" value="Инклюзия"> Инклюзия</label><label class="checkbox-opt"><input type="checkbox" name="q18" value="Пәндік білім"> Пәндік білім</label></div></div>
+            <div class="question-card">
+                <div class="question-text">18. Даму қажеттіліктері</div>
+                <div class="options-grid">
+                    <label class="checkbox-opt"><input type="checkbox" name="q18" value="АКТ дағдылары"> АКТ дағдылары</label>
+                    <label class="checkbox-opt"><input type="checkbox" name="q18" value="Сыныпты басқару"> Сыныпты басқару</label>
+                    <label class="checkbox-opt"><input type="checkbox" name="q18" value="Инклюзия"> Инклюзия</label>
+                    <label class="checkbox-opt"><input type="checkbox" name="q18" value="Пәндік білім"> Пәндік білім</label>
+                </div>
+            </div>
+
             <!-- 19-20 -->
-            <div class="question-card"><div class="question-text">19. Көбірек курстарға барғыңыз келе ме?</div><div class="options-grid"><label class="radio-opt"><input type="radio" name="q19" value="Иә"> Иә</label><label class="radio-opt"><input type="radio" name="q19" value="Жоқ"> Жоқ</label></div>
-            <div class="question-text">20. Кедергілер</div><div class="options-grid"><label class="checkbox-opt"><input type="checkbox" name="q20" value="Қымбат"> Қымбат</label><label class="checkbox-opt"><input type="checkbox" name="q20" value="Уақыт жоқ"> Уақыт жоқ</label><label class="checkbox-opt"><input type="checkbox" name="q20" value="Қолдау жоқ"> Қолдау жоқ</label></div></div>
+            <div class="question-card">
+                <div class="question-text">19. Көбірек курстарға барғыңыз келе ме?</div>
+                <div class="options-grid">
+                    <label class="radio-opt"><input type="radio" name="q19" value="Иә"> Иә</label>
+                    <label class="radio-opt"><input type="radio" name="q19" value="Жоқ"> Жоқ</label>
+                </div>
+                <div class="question-text" style="margin-top:10px;">20. Кедергілер</div>
+                <div class="options-grid">
+                    <label class="checkbox-opt"><input type="checkbox" name="q20" value="Қымбат"> Қымбат</label>
+                    <label class="checkbox-opt"><input type="checkbox" name="q20" value="Уақыт жоқ"> Уақыт жоқ</label>
+                    <label class="checkbox-opt"><input type="checkbox" name="q20" value="Қолдау жоқ"> Қолдау жоқ</label>
+                </div>
+            </div>
+
             <!-- 21 -->
-            <div class="question-card"><div class="question-text">21. Директордан кері байланыс жиілігі</div><select name="q21"><option>Ешқашан</option><option>Жылына 1 рет</option><option>Ай сайын</option><option>Айына 1 реттен көп</option></select></div>
+            <div class="question-card">
+                <div class="question-text">21. Директордан кері байланыс жиілігі</div>
+                <select name="q21">
+                    <option value="Ешқашан">Ешқашан</option>
+                    <option value="Жылына 1 рет">Жылына 1 рет</option>
+                    <option value="Ай сайын">Ай сайын</option>
+                    <option value="Айына 1 реттен көп">Айына 1 реттен көп</option>
+                </select>
+            </div>
+
             <!-- 31 -->
             <div class="question-card">
                 <div class="question-text">31. Жұмысыма қанағаттанамын ба? <span class="required-star">*</span></div>
-                <div class="options-grid"><label class="radio-opt"><input type="radio" name="q31" value="Толық келісемін"> Толық келісемін</label><label class="radio-opt"><input type="radio" name="q31" value="Келісемін"> Келісемін</label><label class="radio-opt"><input type="radio" name="q31" value="Келіспеймін"> Келіспеймін</label><label class="radio-opt"><input type="radio" name="q31" value="Мүлде келіспеймін"> Мүлде келіспеймін</label></div>
+                <div class="options-grid">
+                    <label class="radio-opt"><input type="radio" name="q31" value="Толық келісемін"> Толық келісемін</label>
+                    <label class="radio-opt"><input type="radio" name="q31" value="Келісемін"> Келісемін</label>
+                    <label class="radio-opt"><input type="radio" name="q31" value="Келіспеймін"> Келіспеймін</label>
+                    <label class="radio-opt"><input type="radio" name="q31" value="Мүлде келіспеймін"> Мүлде келіспеймін</label>
+                </div>
             </div>
+
             <!-- 33 -->
-            <div class="question-card"><div class="question-text">33. Сабақ беретін пәндеріңіз</div><div class="options-grid"><label class="checkbox-opt"><input type="checkbox" name="q33" value="Математика"> Математика</label><label class="checkbox-opt"><input type="checkbox" name="q33" value="Тіл/Әдебиет"> Тіл/Әдебиет</label><label class="checkbox-opt"><input type="checkbox" name="q33" value="Жаратылыстану"> Жаратылыстану</label></div></div>
+            <div class="question-card">
+                <div class="question-text">33. Сабақ беретін пәндеріңіз</div>
+                <div class="options-grid">
+                    <label class="checkbox-opt"><input type="checkbox" name="q33" value="Математика"> Математика</label>
+                    <label class="checkbox-opt"><input type="checkbox" name="q33" value="Тіл/Әдебиет"> Тіл/Әдебиет</label>
+                    <label class="checkbox-opt"><input type="checkbox" name="q33" value="Жаратылыстану"> Жаратылыстану</label>
+                </div>
+            </div>
+
             <!-- 41 -->
-            <div class="question-card"><div class="question-text">41. Уақыт бөлінуі (%) (әкімшілік+тәртіп+оқыту=100%)</div><input type="number" name="q41a" placeholder="Әкімшілік %" value="0"><input type="number" name="q41b" placeholder="Тәртіп %" value="0"><input type="number" name="q41c" placeholder="Оқыту %" value="0"></div>
+            <div class="question-card">
+                <div class="question-text">41. Уақыт бөлінуі (%) (Әкімшілік + Тәртіп + Оқыту = 100%)</div>
+                <div class="inline-flex">
+                    <input type="number" name="q41a" placeholder="Әкімшілік %" value="0" min="0" max="100" style="max-width:130px;">
+                    <input type="number" name="q41b" placeholder="Тәртіп %" value="0" min="0" max="100" style="max-width:130px;">
+                    <input type="number" name="q41c" placeholder="Оқыту %" value="0" min="0" max="100" style="max-width:130px;">
+                </div>
+            </div>
+
             <!-- 43 -->
-            <div class="question-card"><div class="question-text">43. Сынып өте шулы ма?</div><div class="options-grid"><label class="radio-opt"><input type="radio" name="q43" value="Келіспеймін"> Келіспеймін</label><label class="radio-opt"><input type="radio" name="q43" value="Келісемін"> Келісемін</label><label class="radio-opt"><input type="radio" name="q43" value="Толық келісемін"> Толық келісемін</label></div></div>
-            <div class="question-card"><div class="question-text">Қосымша пікір</div><textarea name="feedback" rows="2"></textarea></div>
+            <div class="question-card">
+                <div class="question-text">43. Сынып өте шулы ма?</div>
+                <div class="options-grid">
+                    <label class="radio-opt"><input type="radio" name="q43" value="Келіспеймін"> Келіспеймін</label>
+                    <label class="radio-opt"><input type="radio" name="q43" value="Келісемін"> Келісемін</label>
+                    <label class="radio-opt"><input type="radio" name="q43" value="Толық келісемін"> Толық келісемін</label>
+                </div>
+            </div>
+
+            <!-- Қосымша пікір -->
+            <div class="question-card">
+                <div class="question-text">Қосымша пікір</div>
+                <textarea name="feedback" rows="2" placeholder="Қосымша ойларыңыз..."></textarea>
+            </div>
+
         </form>
 
         <div class="button-group">
-            <button id="saveExcelBtn">📎 Сауалнама нәтижесін Excel-ге сақтау</button>
+            <button id="googleSheetsBtn" class="btn-google">📤 Google Sheets-ке сақтау</button>
+            <button id="saveExcelBtn">📎 Excel-ге сақтау</button>
         </div>
 
         <hr>
 
         <div class="section-title">📊 SWOT талдау</div>
         <div class="file-area">
-            <p>Excel файлын таңдаңыз (жоғарыда сақталған файл):</p>
-            <input type="file" id="excelFileInput" accept=".xls,.xlsx">
+            <p>🔹 Excel файлын таңдаңыз (жоғарыда сақталған файл):</p>
+            <input type="file" id="excelFileInput" accept=".xls,.xlsx" style="margin-top:10px;">
         </div>
         <div class="button-group">
             <button id="swotAnalyzeBtn" class="btn-upload">📂 SWOT талдау жасау</button>
             <button id="swotDownloadBtn" class="btn-swot">📥 SWOT нәтижесін Excel-ге жүктеу</button>
         </div>
-        <div id="swotDisplay" class="swot-result" style="display:none;"></div>
 
+        <div id="swotDisplay" class="swot-result"></div>
         <div id="statusMsg" class="status-msg"></div>
+
     </div>
-    <div class="footer">Барлық өрістерді толтырып, «Сауалнама нәтижесін Excel-ге сақтау» батырмасын басыңыз. Содан кейін сол файлды таңдап, SWOT талдау жасаңыз.</div>
+    <div class="footer">
+        Барлық өрістерді толтырып, «Excel-ге сақтау» немесе «Google Sheets-ке сақтау» батырмасын басыңыз.
+    </div>
 </div>
 
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <script>
-    let currentSWOT = null;
+    (function() {
+        'use strict';
 
-    function showStatus(msg, isError) {
-        const div = document.getElementById('statusMsg');
-        div.innerHTML = msg;
-        div.style.color = isError ? '#c9302c' : '#2c6e5c';
-        div.style.background = isError ? '#f8e5e5' : '#e1f3e8';
-        setTimeout(() => div.innerHTML = '', 4000);
-    }
+        let currentSWOT = null;
+        const statusMsg = document.getElementById('statusMsg');
+        const swotDisplay = document.getElementById('swotDisplay');
 
-    function getAllAnswers() {
-        let data = {};
-        const form = document.getElementById('talisForm');
-        const allInputs = form.querySelectorAll('input, select, textarea');
-        allInputs.forEach(el => {
-            if (el.type === 'radio' && el.checked) data[el.name] = el.value;
-            else if (el.type === 'checkbox' && el.checked) {
-                if (!data[el.name]) data[el.name] = [];
-                data[el.name].push(el.value);
+        // ==================== Google Sheets URL ====================
+        // Мына URL-ді өзіңіздің Google Apps Script Web App URL-іне ауыстырыңыз
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbznZpB_49VjEPm9t-NepiOROe829wD8tCPWTUFcyuogGE_yFCuoFnUv2YYC1DRR2a1ZRQ/exec';
+//const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/1Gjcirwa6-ICFU7jAqsyqfZuy6xj8QYPYiSWsQahGW1U/exec';
+
+        // ==================== Көмекші функциялар ====================
+
+        function showStatus(msg, type) {
+            statusMsg.textContent = msg;
+            statusMsg.className = 'status-msg show ' + (type || 'info');
+            if (type !== 'error') {
+                setTimeout(() => {
+                    statusMsg.className = 'status-msg';
+                }, 5000);
             }
-            else if (el.type !== 'radio' && el.type !== 'checkbox') data[el.name] = el.value;
-        });
-        for (let k in data) if (Array.isArray(data[k])) data[k] = data[k].join(', ');
-        data['Уақыты'] = new Date().toLocaleString('kk-KZ');
-        return data;
-    }
+        }
 
-    function downloadExcel(dataArray, filename) {
-        if (!dataArray || dataArray.length === 0) return;
-        let headers = Object.keys(dataArray[0]);
-        let html = '<html><head><meta charset="UTF-8"></head><body><table border="1" cellpadding="5">';
-        html += '<thead><tr>' + headers.map(h => `<th>${escapeHtml(h)}</th>`).join('') + '</tr></thead><tbody>';
-        dataArray.forEach(row => {
-            html += '<tr>';
-            headers.forEach(h => {
-                let val = row[h] !== undefined ? row[h] : '';
-                html += `<td>${escapeHtml(String(val))}</td>`;
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                if (m === '"') return '&quot;';
+                return m;
             });
-            html += '</tr>';
-        });
-        html += '</tbody></table></body></html>';
-        const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = filename.endsWith('.xls') ? filename : filename + '.xls';
-        link.click();
-        URL.revokeObjectURL(link.href);
-    }
-
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
-    }
-
-    // Сауалнама нәтижесін сақтау
-    document.getElementById('saveExcelBtn').addEventListener('click', function() {
-        let answers = getAllAnswers();
-        downloadExcel([answers], `Talis_survey_${Date.now()}.xls`);
-        showStatus('✅ Сауалнама нәтижелері Excel-ге жүктелді!', false);
-    });
-
-    // SWOT генерациялау
-    function generateSWOT(row) {
-        let swot = { S: [], W: [], O: [], T: [] };
-        let satisfaction = row.q31 || '';
-        let exp = row.q9 || '';
-        let noise = row.q43 || '';
-        let needs = row.q18 || '';
-        let more = row.q19 || '';
-        
-        if (satisfaction === 'Толық келісемін' || satisfaction === 'Келісемін') swot.S.push('✅ Жұмысқа қанағат жоғары');
-        if (satisfaction === 'Келіспеймін' || satisfaction === 'Мүлде келіспеймін') swot.W.push('⚠️ Жұмысқа қанағат төмен');
-        if (exp === '20+ жыл' || exp === '16-20 жыл') swot.S.push('🏆 Ұзақ педагогикалық тәжірибе');
-        if (exp === 'Бірінші жылым' || exp === '1-2 жыл') swot.W.push('🌱 Тәжірибе аз, жас маманды қолдау қажет');
-        if (noise === 'Толық келісемін') swot.W.push('📢 Сынып тәртібі нашар, шу деңгейі жоғары');
-        if (noise === 'Келіспеймін') swot.S.push('🔇 Сыныпта тәртіп жақсы');
-        if (needs && needs.includes('АКТ дағдылары')) swot.O.push('💻 АКТ дағдыларын дамыту мүмкіндігі');
-        if (needs && needs.includes('Сыныпты басқару')) swot.O.push('🧑‍🏫 Сыныпты басқару тренингтері');
-        if (needs && needs.includes('Инклюзия')) swot.O.push('♿ Инклюзивті білім беруді дамыту');
-        if (more === 'Иә') swot.O.push('📚 Кәсіби дамуға деген жоғары ынта');
-        if (!swot.S.length) swot.S.push('Нақты күшті жақтар анықталмады');
-        if (!swot.W.length) swot.W.push('Айқын әлсіз жақтар жоқ');
-        if (!swot.O.length) swot.O.push('Біліктілікті арттыру арқылы өсу мүмкіндігі');
-        swot.T.push('⚡ Жүктеме мен кәсіби күйзеліс қаупі');
-        return swot;
-    }
-
-    // Excel файлын оқу
-    function readExcelFile(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const rows = XLSX.utils.sheet_to_json(firstSheet);
-                    if (rows.length === 0) reject(new Error('Файл бос'));
-                    resolve(rows[0]);
-                } catch (err) { reject(err); }
-            };
-            reader.onerror = reject;
-            reader.readAsArrayBuffer(file);
-        });
-    }
-
-    // SWOT талдау жасау
-    document.getElementById('swotAnalyzeBtn').addEventListener('click', function() {
-        const fileInput = document.getElementById('excelFileInput');
-        if (!fileInput.files || fileInput.files.length === 0) {
-            showStatus('❌ Excel файлын таңдаңыз!', true);
-            return;
         }
-        showStatus('⏳ Файл оқылып, SWOT талдау жасалуда...', false);
-        readExcelFile(fileInput.files[0]).then(row => {
-            currentSWOT = generateSWOT(row);
-            const displayDiv = document.getElementById('swotDisplay');
-            displayDiv.style.display = 'block';
-            displayDiv.innerHTML = `
-                <div class="swot-item swot-s"><strong>✔ КҮШТІ ЖАҚТАР (Strengths):</strong><br>${currentSWOT.S.join('; ')}</div>
-                <div class="swot-item swot-w"><strong>⚠ ӘЛСІЗ ЖАҚТАР (Weaknesses):</strong><br>${currentSWOT.W.join('; ')}</div>
-                <div class="swot-item swot-o"><strong>🔮 МҮМКІНДІКТЕР (Opportunities):</strong><br>${currentSWOT.O.join('; ')}</div>
-                <div class="swot-item swot-t"><strong>⚡ ҚАТЕРЛЕР (Threats):</strong><br>${currentSWOT.T.join('; ')}</div>
-            `;
-            showStatus('✅ SWOT талдау сәтті аяқталды!', false);
-        }).catch(err => {
-            console.error(err);
-            showStatus('❌ Файлды оқу қатесі. Формат дұрыс болуы керек.', true);
-        });
-    });
 
-    // SWOT нәтижесін Excel-ге жүктеу
-    document.getElementById('swotDownloadBtn').addEventListener('click', function() {
-        if (!currentSWOT) {
-            showStatus('❌ Алдымен SWOT талдау жасаңыз!', true);
-            return;
+        function getAllAnswers() {
+            const form = document.getElementById('talisForm');
+            const data = {};
+            const inputs = form.querySelectorAll('input, select, textarea');
+
+            inputs.forEach(el => {
+                const name = el.name;
+                if (!name) return;
+
+                if (el.type === 'radio') {
+                    if (el.checked) data[name] = el.value;
+                } else if (el.type === 'checkbox') {
+                    if (el.checked) {
+                        if (!data[name]) data[name] = [];
+                        data[name].push(el.value);
+                    }
+                } else {
+                    data[name] = el.value;
+                }
+            });
+
+            for (let key in data) {
+                if (Array.isArray(data[key])) {
+                    data[key] = data[key].join(', ');
+                }
+            }
+
+            data['Уақыты'] = new Date().toLocaleString('kk-KZ');
+            return data;
         }
-        const rows = [
-            { Категория: 'КҮШТІ ЖАҚТАР (Strengths)', Сипаттама: currentSWOT.S.join('; ') },
-            { Категория: 'ӘЛСІЗ ЖАҚТАР (Weaknesses)', Сипаттама: currentSWOT.W.join('; ') },
-            { Категория: 'МҮМКІНДІКТЕР (Opportunities)', Сипаттама: currentSWOT.O.join('; ') },
-            { Категория: 'ҚАТЕРЛЕР (Threats)', Сипаттама: currentSWOT.T.join('; ') },
-            { Категория: 'Талдау уақыты', Сипаттама: new Date().toLocaleString('kk-KZ') }
-        ];
-        downloadExcel(rows, `SWOT_talday_${Date.now()}.xls`);
-        showStatus('📊 SWOT нәтижесі Excel-ге жүктелді!', false);
-    });
-</script>
-</body>
-</html>
+
+        function downloadExcel(dataArray, filename) {
+            if (!dataArray || dataArray.length === 0) {
+                showStatus('❌ Сақтайтын дерек жоқ', 'error');
+                return
